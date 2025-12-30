@@ -21,6 +21,7 @@
         require_once '../../classes/Category.php';
         $showCategory = new category();
         $dataCategory = $showCategory->getCatCard();
+        // print_r($dataCategory);
         ?>
       <!-- ESPACE ÉTUDIANT -->
       <div id="studentSpace" class=" pt-16">
@@ -58,7 +59,7 @@
                                   <p class="text-gray-600 mb-4"><?= $cate['description'] ?></p>
                                   <div class="flex justify-between items-center text-sm">
                                       <span class="text-gray-500"><i class="fas fa-clipboard-list mr-2"></i><?= $cate['quiz_q'] ?></span>
-                                      <span class="text-green-600 font-semibold group-hover:translate-x-2 transition-transform">Explorer →</span>
+                                      <a href="available_quizzes?id=<?= $cate['id'] ?>" class="text-green-600 font-semibold group-hover:translate-x-2 transition-transform">Explorer →</a>
                                   </div>
                               </div>
                           </div>
