@@ -130,7 +130,8 @@
                 $sql = "SELECT c.*, 
                        COUNT(DISTINCT q.id) as quiz_q
                 FROM categories c
-                JOIN quiz q ON c.id = q.categorie_id
+                left JOIN quiz q ON c.id = q.categorie_id
+                where q.is_active = 1
                 GROUP BY c.id
                 ORDER BY c.created_at DESC";
                 $result = $this->db->query($sql);
@@ -155,4 +156,5 @@
                 $result = $this->db->query($sql, [$id]);
                 return $result->fetchAll(PDO::FETCH_ASSOC);
             }
+           
         }

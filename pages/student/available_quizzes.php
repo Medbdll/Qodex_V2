@@ -59,7 +59,7 @@
                                                <i class="fas fa-clock mr-2"></i><= $quiz['duration'] ?> min
                                            </span> -->
                                        </div>
-                                       <a href="quiz_details.php?id=<?= $quiz['id'] ?>"
+                                       <a href="take_quiz.php?id=<?= $quiz['id'] ?>"
                                            class="text-<?= $color ?>-600 font-semibold group-hover:translate-x-2 transition-transform">
                                            Start Quiz →
                                        </a>
