@@ -1,73 +1,86 @@
- <?php
-    // session_start();
-    require_once '../../config/database.php';
-    $currentPage = 'resultats';
-    ?><!-- Student Results -->
- <?php include '../partials/header.php'; ?>
- <?php include '../partials/nav_etudiant.php'; ?>
- <div id="studentResults" class="student-section ">
-     <div class="bg-gradient-to-r from-green-600 to-teal-600 text-white">
-         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-             <button class="text-white hover:text-green-100 mb-4">
-                 <i class="fas fa-arrow-left mr-2"></i>Retour au tableau de bord
-             </button>
-             <h1 class="text-4xl font-bold mb-2">Mes Résultats</h1>
-             <p class="text-xl text-green-100">Suivez votre progression et vos performances</p>
-         </div>
-     </div>
+<?php
+require_once '../../config/database.php';
+require_once '../../classes/Database.php';
+require_once '../../classes/Security.php';
+require_once '../../classes/Result.php';
 
-     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-         <!-- Stats Cards -->
-         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-             <div class="bg-white rounded-xl shadow-md p-6">
-                 <div class="flex items-center justify-between">
-                     <div>
-                         <p class="text-gray-500 text-sm">Quiz Complétés</p>
-                         <p class="text-3xl font-bold text-gray-900">24</p>
-                     </div>
-                     <div class="bg-blue-100 p-3 rounded-lg">
-                         <i class="fas fa-check-circle text-blue-600 text-2xl"></i>
-                     </div>
-                 </div>
-             </div>
+Security::requireStudent();
 
-             <div class="bg-white rounded-xl shadow-md p-6">
-                 <div class="flex items-center justify-between">
-                     <div>
-                         <p class="text-gray-500 text-sm">Moyenne</p>
-                         <p class="text-3xl font-bold text-gray-900">16.5/20</p>
-                     </div>
-                     <div class="bg-green-100 p-3 rounded-lg">
-                         <i class="fas fa-star text-green-600 text-2xl"></i>
-                     </div>
-                 </div>
-             </div>
+$resultId = intval($_GET['result_id'] ?? 0);
+$studentId = $_SESSION['user_id'];
 
-             <div class="bg-white rounded-xl shadow-md p-6">
-                 <div class="flex items-center justify-between">
-                     <div>
-                         <p class="text-gray-500 text-sm">Taux Réussite</p>
-                         <p class="text-3xl font-bold text-gray-900">85%</p>
-                     </div>
-                     <div class="bg-purple-100 p-3 rounded-lg">
-                         <i class="fas fa-chart-line text-purple-600 text-2xl"></i>
-                     </div>
-                 </div>
-             </div>
+$resultObj = new Result();
+$result = $resultObj->getById($resultId, $studentId);
 
-             <div class="bg-white rounded-xl shadow-md p-6">
-                 <div class="flex items-center justify-between">
-                     <div>
-                         <p class="text-gray-500 text-sm">Classement</p>
-                         <p class="text-3xl font-bold text-gray-900">#12</p>
-                     </div>
-                     <div class="bg-yellow-100 p-3 rounded-lg">
-                         <i class="fas fa-trophy text-yellow-600 text-2xl"></i>
-                     </div>
-                 </div>
-             </div>
-         </div>
+$percentage = ($result['score'] / $result['total_questions']) * 100;
 
+if ($percentage >= 80) {
+    $message = 'Excellent !';
+    $color = 'green';
+} elseif ($percentage >= 60) {
+    $message = 'Bien joué !';
+    $color = 'yellow';
+} else {
+    $message = 'Continue !';
+    $color = 'red';
+}
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Résultat - Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
 
-     </div>
- </div>
+<div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+
+    <div class="text-6xl mb-4">
+        <?php if ($percentage >= 80): ?>
+            🎉
+        <?php elseif ($percentage >= 60): ?>
+            👍
+        <?php else: ?>
+            💪
+        <?php endif; ?>
+    </div>
+    
+    <h1 class="text-3xl font-bold mb-2 text-<?= $color ?>-600"><?= $message ?></h1>
+    <p class="text-gray-600 mb-6"><?= htmlspecialchars($result['quiz_titre']) ?></p>
+    
+    <div class="bg-<?= $color ?>-100 rounded-lg p-6 mb-6">
+        <div class="text-5xl font-bold text-<?= $color ?>-600 mb-2">
+            <?= round($percentage) ?>%
+        </div>
+        <div class="text-gray-600">
+            <?= $result['score'] ?> bonnes réponses sur <?= $result['total_questions'] ?>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-green-100 rounded p-3">
+            <div class="text-2xl font-bold text-green-600"><?= $result['score'] ?></div>
+            <div class="text-sm text-gray-600">Correctes</div>
+        </div>
+        <div class="bg-red-100 rounded p-3">
+            <div class="text-2xl font-bold text-red-600"><?= $result['total_questions'] - $result['score'] ?></div>
+            <div class="text-sm text-gray-600">Erreurs</div>
+        </div>
+    </div>
+    
+    <div class="space-y-3">
+        <a href="dashboard.php" 
+           class="block w-full px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700">
+            <i class="fas fa-home mr-2"></i>Retour au tableau de bord
+        </a>
+        <a href="results.php" 
+           class="block w-full px-6 py-3 border border-gray-300 rounded hover:bg-gray-50">
+            <i class="fas fa-chart-bar mr-2"></i>Voir tous mes résultats
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

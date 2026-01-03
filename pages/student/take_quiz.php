@@ -1,87 +1,187 @@
-       <?php
-        // session_start();
-        require_once '../../config/database.php';
-        require_once '../../classes/Database.php';
-        require_once '../../classes/Question.php';
+<?php
+require_once '../../config/database.php';
+require_once '../../classes/Database.php';
+require_once '../../classes/Security.php';
+require_once '../../classes/Question.php';
+require_once '../../classes/Quiz.php';
 
-        $id = $_GET["id"];
-        $quizQue = new Question();
-        $dataQuestions = $quizQue->getAllByQuiz($id);
-        $titreQuestions = $quizQue->getQuizTitre($id);
-        $totalQuestions = $quizQue->countByQuiz($id);
-        ?>
-       <!-- Quiz Taking Interface -->
-       <?php include '../partials/header.php'; ?>
-       <div id="takeQuiz" class="student-section ">
-           <div class="bg-gradient-to-r from-green-600 to-teal-600 text-white">
-               <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                   <div class="flex justify-between items-center">
-                       <div>
-                           <?php foreach ($titreQuestions as $key): ?>
-                               <h1 class="text-3xl font-bold mb-2" id="quizTitle"><?= $key['titre'] ?></h1>
-                           <?php endforeach ?>
-                           <p class="text-green-100">Question <span id="currentQuestion">1</span> sur <span id="totalQuestions"><?= $totalQuestions ?></span></p>
-                       </div>
-                       <div class="text-right">
-                           <div class="text-sm text-green-100 mb-1">Temps restant</div>
-                           <div class="text-3xl font-bold" id="timer">30:00</div>
-                       </div>
-                   </div>
-               </div>
-           </div>
-           <?php foreach ($dataQuestions as $key): ?>
-               <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                   <div class="bg-white rounded-xl shadow-lg p-8">
-                       <h3 class="text-2xl font-bold text-gray-900 mb-6" id="questionText">
-                           <?= $key['question'] ?>
-                       </h3>
+Security::requireStudent();
 
-                       <div class="space-y-4">
-                           <div class="answer-option p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition">
-                               <div class="flex items-center">
-                                   <div class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center mr-4 option-radio">
-                                       <div class="w-4 h-4 rounded-full bg-green-600 hidden option-selected"></div>
-                                   </div>
-                                   <span class="text-lg"><?= $key['option1'] ?></span>
-                               </div>
-                           </div>
+$quizId = intval($_GET['id'] ?? 0);
+$studentId = $_SESSION['user_id'];
+$quizObj = new Quiz();
+$quiz = $quizObj->getById($quizId);
+$questionObj = new Question();
+$questions = $questionObj->getAllByQuiz($quizId);
+$totalQuestions = count($questions);
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz - <?= htmlspecialchars($quiz['titre']) ?></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
 
-                           <div class="answer-option p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition">
-                               <div class="flex items-center">
-                                   <div class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center mr-4 option-radio">
-                                       <div class="w-4 h-4 rounded-full bg-green-600 hidden option-selected"></div>
-                                   </div>
-                                   <span class="text-lg"><?= $key['option2'] ?></span>
-                               </div>
-                           </div>
+<div class="bg-green-600 text-white p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold"><?= htmlspecialchars($quiz['titre']) ?></h1>
+        <p>Question <span id="questionNumber">1</span> sur <?= $totalQuestions ?></p>
+    </div>
+</div>
 
-                           <div class="answer-option p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition">
-                               <div class="flex items-center">
-                                   <div class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center mr-4 option-radio">
-                                       <div class="w-4 h-4 rounded-full bg-green-600 hidden option-selected"></div>
-                                   </div>
-                                   <span class="text-lg"><?= $key['option3'] ?></span>
-                               </div>
-                           </div>
+<div class="max-w-4xl mx-auto p-6">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 id="questionText" class="text-xl font-bold mb-6"></h2>
+        <div id="optionsContainer" class="space-y-3"></div>
+        
+        <div class="flex justify-between mt-8">
+            <button id="prevBtn" onclick="goToPrevious()" 
+                    class="px-6 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                ← Précédent
+            </button>
+            
+            <button id="nextBtn" onclick="goToNext()" 
+                    class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                Suivant →
+            </button>
+            
+            <button id="finishBtn" onclick="finishQuiz()" 
+                    class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 hidden">
+                Terminer
+            </button>
+        </div>
+    </div>
+</div>
 
-                           <div class="answer-option p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition">
-                               <div class="flex items-center">
-                                   <div class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center mr-4 option-radio">
-                                       <div class="w-4 h-4 rounded-full bg-green-600 hidden option-selected"></div>
-                                   </div>
-                                   <span class="text-lg"><?= $key['option4'] ?></span>
-                               </div>
-                           </div>
-                       </div>
-                       <div class="flex justify-between mt-8">
-                           <button class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                               <i class="fas fa-arrow-left mr-2"></i>Précédent
-                           </button>
-                           <button class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                               Suivant<i class="fas fa-arrow-right ml-2"></i>
-                           </button>
-                       </div>
-                   </div>
-               </div>
-           <?php endforeach ?>
-       </div>
+<script>
+
+const questions = <?= json_encode($questions) ?>;
+const quizId = <?= $quizId ?>;
+const studentId = <?= $studentId ?>;
+const csrfToken = '<?= Security::generateCSRFToken() ?>';
+
+let currentIndex = 0;
+let answers = {}; 
+window.onload = function() {
+    showQuestion(0);
+};
+
+function showQuestion(index) {
+    const question = questions[index];
+    
+    document.getElementById('questionText').textContent = question.question;
+    document.getElementById('questionNumber').textContent = index + 1;
+    
+    const container = document.getElementById('optionsContainer');
+    container.innerHTML = ''; 
+    
+    for (let i = 1; i <= 4; i++) {
+        const div = document.createElement('div');
+        div.className = 'p-4 border-2 rounded cursor-pointer hover:bg-green-50';
+        
+        if (answers[question.id] === i) {
+            div.className += ' border-green-500 bg-green-50';
+        } else {
+            div.className += ' border-gray-200';
+        }
+        
+        div.onclick = function() { selectAnswer(question.id, i); };
+        div.innerHTML = `
+            <div class="flex items-center">
+                <span class="w-8 h-8 rounded-full border-2 mr-3 flex items-center justify-center ${answers[question.id] === i ? 'bg-green-600 border-green-600 text-white' : 'border-gray-300'}">
+                    ${answers[question.id] === i ? '✓' : i}
+                </span>
+                <span>${question['option' + i]}</span>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+    
+    updateButtons();
+}
+
+function selectAnswer(questionId, optionNumber) {
+    answers[questionId] = optionNumber;
+    showQuestion(currentIndex); 
+}
+
+function goToNext() {
+    if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        showQuestion(currentIndex);
+    }
+}
+
+function goToPrevious() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        showQuestion(currentIndex);
+    }
+}
+
+function updateButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const finishBtn = document.getElementById('finishBtn');
+    
+    prevBtn.disabled = (currentIndex === 0);
+    prevBtn.className = currentIndex === 0 ? 'px-6 py-2 bg-gray-200 rounded opacity-50' : 'px-6 py-2 bg-gray-300 rounded hover:bg-gray-400';
+    
+    if (currentIndex === questions.length - 1) {
+        nextBtn.classList.add('hidden');
+        finishBtn.classList.remove('hidden');
+    } else {
+        nextBtn.classList.remove('hidden');
+        finishBtn.classList.add('hidden');
+    }
+}
+
+function finishQuiz() {
+    const answeredCount = Object.keys(answers).length;
+    
+    if (answeredCount < questions.length) {
+        const confirm = window.confirm(
+            `Vous avez répondu à ${answeredCount} questions sur ${questions.length}.\n` +
+            `Voulez-vous vraiment terminer ?`
+        );
+        if (!confirm) return;
+    }
+    
+    let score = 0;
+    questions.forEach(function(q) {
+        if (answers[q.id] === q.correct_option) {
+            score++;
+        }
+    });
+    
+    const formData = new FormData();
+    formData.append('csrf_token', csrfToken);
+    formData.append('quiz_id', quizId);
+    formData.append('student_id', studentId);
+    formData.append('score', score);
+    formData.append('total_questions', questions.length);
+    
+    fetch('../../actions/submit_quiz.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = 'my_results.php?result_id=' + data.result_id;
+        } else {
+            alert('Erreur : ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Erreur de connexion');
+        console.error(error);
+    });
+}
+</script>
+
+</body>
+</html>

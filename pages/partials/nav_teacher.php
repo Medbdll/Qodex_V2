@@ -54,11 +54,8 @@ if (strpos($_SERVER['PHP_SELF'], '/teacher/') !== false) {
                     </a>
                 </div>
             </div>
-            
-            <!-- Profil & Déconnexion -->
             <div class="flex items-center">
                 <div class="flex items-center space-x-4">
-                    <!-- Avatar -->
                     <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
                         <?= $initials ?>
                     </div>
